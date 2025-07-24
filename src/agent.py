@@ -1,10 +1,12 @@
 import torch
+import torch.nn as nn
+import torch.optim as optim
 import random
 import numpy as np
 import model
 from collections import deque, namedtuple
 
-Experience = namedtuple('Experience', 'state action next_state reward')
+Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
 
 class ReplayMemory:
     def __init__(self, max_capacity):
@@ -41,25 +43,22 @@ class DQNAgent:
         self.target_net.to(self.device)
         self.target_net.eval()
 
+        self.optimizer = optim.RMSprop(self.policy_net.parameters(), lr=self.lr)
+        self.criterion = nn.SmoothL1Loss()
+
     def select_action(self, state):
         self.epsilon = np.max(self.epsilon * self.epsilon_decay, self.epsilon_end)
 
         if np.random.rand() < self.epsilon:
-            action_index = np.random.randint(0, self.action_dim)
-            action = np.zeros(self.action_dim)
-            action[action_index] = 1
-            action = action.tolist()
+            action = np.random.randint(0, self.action_dim)
         else:
             state = torch.tensor(state, dtype=torch.float32, device=self.device)
             state = state.unsqueeze(0)
-            q_values = self.policy_net(state)
-            q_values = q_values.squeeze(0)
 
-            action_index = torch.argmax(q_values)
-            action_index = action_index.item()
-            action = np.zeros(self.action_dim)
-            action[action_index] = 1
-            action = action.tolist()
+            with torch.no_grad():
+                q_values = self.policy_net(state)
+            q_values = q_values.squeeze(0)
+            action = torch.argmax(q_values).item()
 
         return action
 
@@ -76,7 +75,30 @@ class DQNAgent:
     def optimize_model(self):
         if len(self.memory) < self.batch_size:
             return
+        
+        experiences = self.sample_memory(self.batch_size)
+        batch = Experience(*zip(*experiences))
 
+        not_terminal_mask = torch.tensor((s is not None for s in batch.next_state), dtype=torch.bool, device=self.device)
+        not_terminal_next_states = torch.tensor((s for s in batch.next_state if s is not None), dtype=torch.float32, device=self.device)
+
+        states = (torch.tensor(s, dtype=torch.float32, device=self.device).unsqueeze(0) for s in batch.state)
+        state_batch = torch.cat(states)
+
+        actions = (torch.tensor(a, dtype=torch.float32, device=self.device).unsqueeze(0) for a in batch.action)
+        action_batch = torch.cat(actions)
+
+        rewards = (torch.tensor(r, dtype=torch.float32, device=self.device).unsqueeze(0) for r in batch.reward)
+        reward_batch = torch.cat(rewards)
+
+        q_state_action = self.policy_net(state_batch).gather(1, action_batch)
+
+        q_next_state = torch.zeros(self.batch_size, device=self.device)
+        with torch.no_grad():
+            [not_terminal_mask]
+
+        self.optimizer.zero_grad()
+        
     def save(self):
         pass
 

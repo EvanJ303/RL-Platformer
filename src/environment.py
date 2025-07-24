@@ -42,11 +42,11 @@ objective_index = 0
 def step(agent_input):
     global agent_vel_y, on_ground, objective_index
 
-    if agent_input[0] == 1:
+    if agent_input == 0:
         agent.x -= agent_speed
-    if agent_input[1] == 1:
+    if agent_input == 1:
         agent.x += agent_speed
-    if agent_input[2] == 1 and on_ground:
+    if agent_input == 2 and on_ground:
         agent_vel_y = JUMP_POWER
         on_ground = 0
 
