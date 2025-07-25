@@ -70,7 +70,7 @@ class DQNAgent:
 
     def update_target(self):
         for policy_param, target_param in zip(self.policy_net.parameters(), self.target_net.parameters()):
-            target_param.data.copy_(self.tau * policy_param.data + (1 - self.tau) * target_param.data)
+            target_param.data.copy_(self.tau * policy_param.data + (1.0 - self.tau) * target_param.data)
 
     def optimize_model(self):
         if len(self.memory) < self.batch_size:
@@ -95,9 +95,25 @@ class DQNAgent:
 
         q_next_state = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
-            [not_terminal_mask]
+            q_next_state[not_terminal_mask] = self.target_net(not_terminal_next_states).max(1).values
+
+        expected_q_state_action = reward_batch + (self.gamma * q_next_state)
+
+        loss = self.criterion(q_state_action.squeeze(), expected_q_state_action)
 
         self.optimizer.zero_grad()
+        loss.backward()
+        nn.utils.clip_grad_norm_(self.policy_net.parameters(), 1.0)
+        self.optimizer.step()
+        self.update_target()
+
+    def disable_exploration(self):
+        self.epsilon = 0.0
+        self.epsilon_end = 0.0
+
+    def enable_exploration(self):
+        self.epsilon = 0.9
+        self.epsilon_end = 0.01
         
     def save(self):
         pass
