@@ -46,6 +46,8 @@ class DQNAgent:
         self.optimizer = optim.RMSprop(self.policy_net.parameters(), lr=self.lr)
         self.criterion = nn.SmoothL1Loss()
 
+        self.checkpoint_path = './data/checkpoint.pth'
+
     def select_action(self, state):
         self.epsilon = np.max(self.epsilon * self.epsilon_decay, self.epsilon_end)
 
@@ -114,9 +116,19 @@ class DQNAgent:
     def enable_exploration(self):
         self.epsilon = 0.9
         self.epsilon_end = 0.01
-        
+
     def save(self):
-        pass
+        torch.save({
+            'policy_net_state_dict' : self.policy_net.state_dict(),
+            'target_net_state_dict' : self.target_net.state_dict(),
+            'optimizer_state_dict' : self.optimizer.state_dict(),
+            'epsilon' : self.epsilon,
+        }, self.checkpoint_path)
 
     def load(self):
-        pass
+        checkpoint = torch.load(self.checkpoint_path, map_location=self.device)
+
+        self.policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
+        self.target_net.load_state_dict(checkpoint['target_net_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        self.epsilon = checkpoint['epsilon']
