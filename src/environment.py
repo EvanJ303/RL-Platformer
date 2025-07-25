@@ -1,5 +1,6 @@
 import numpy as np
 import pygame
+import sys
 
 WIDTH = 1200
 HEIGHT = 900
@@ -23,6 +24,9 @@ on_ground = 0
 
 DEFAULT_STATE = (100, 300, 0, 200, 425, 0)
 
+MAX_STEPS = 1000
+step_count = 0
+
 ground = pygame.Rect(0, 550, WIDTH, 50)
 
 platforms = [
@@ -40,7 +44,17 @@ objectives = [
 objective_index = 0
 
 def step(agent_input):
-    global agent_vel_y, on_ground, objective_index
+    global agent_vel_y, on_ground, objective_index, step_count
+
+    done = False
+    step_count += 1
+    if step_count >= MAX_STEPS:
+        done = True
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
 
     if agent_input == 0:
         agent.x -= agent_speed
@@ -81,10 +95,17 @@ def step(agent_input):
     clock.tick(FPS)
 
     state = (agent.x, agent.y, agent_vel_y, objectives[objective_index].x, objectives[objective_index].y, on_ground)
-    return state
+    
+    reward = 0.0
+
+    if agent.colliderect(objectives[objective_index]):
+        reward = 10
+    reward -= 0.1
+
+    return state, reward, done, {}
 
 def reset():
-    global agent_vel_y, objective_index, on_ground
+    global agent_vel_y, objective_index, on_ground, step_count
 
     agent.x = 100
     agent.y = 300
@@ -92,4 +113,17 @@ def reset():
     objective_index = 0
     on_ground = 0
 
-    return DEFAULT_STATE
+    step_count = 0
+
+    screen.fill(WHITE)
+    
+    pygame.draw.rect(screen, RED, agent)
+    pygame.draw.rect(screen, GREEN, ground)
+    pygame.draw.rect(screen, BLUE, objectives[objective_index])
+
+    for platform in platforms:
+        pygame.draw.rect(screen, GREEN, platform)
+
+    pygame.display.flip()
+
+    return DEFAULT_STATE, {}

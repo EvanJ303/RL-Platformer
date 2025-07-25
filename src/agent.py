@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.nn.utils as utils
 import torch.optim as optim
-import random
 import numpy as np
 import model
 from collections import deque, namedtuple
+import random
 
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
 
@@ -105,7 +106,7 @@ class DQNAgent:
 
         self.optimizer.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm_(self.policy_net.parameters(), 1.0)
+        utils.clip_grad_norm_(self.policy_net.parameters(), 1.0)
         self.optimizer.step()
         self.update_target()
 
