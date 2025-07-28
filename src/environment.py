@@ -99,7 +99,7 @@ def step(agent_input):
     reward = 0.0
 
     if agent.colliderect(objectives[objective_index]):
-        reward = 10
+        reward = 10.0
     reward -= 0.1
 
     return state, reward, done, {}
