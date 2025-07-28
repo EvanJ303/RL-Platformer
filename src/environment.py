@@ -15,14 +15,14 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-agent = pygame.Rect(100, 300, 25, 25)
+agent = pygame.Rect(588, 300, 25, 25)
 agent_speed = 5
 agent_vel_y = 0
 GRAVITY = 0.7
-JUMP_POWER = -20
+JUMP_POWER = -15
 on_ground = 0
 
-DEFAULT_STATE = (100, 300, 0, 200, 425, 0)
+DEFAULT_STATE = (588, 300, 0, 200, 425, 0)
 
 MAX_STEPS = 1500
 step_count = 0
@@ -30,15 +30,15 @@ step_count = 0
 ground = pygame.Rect(0, 550, WIDTH, 50)
 
 platforms = [
-    pygame.Rect(200, 450, 200, 20),
+    pygame.Rect(250, 450, 200, 20),
     pygame.Rect(500, 350, 200, 20),
-    pygame.Rect(100, 250, 200, 20)
+    pygame.Rect(750, 250, 200, 20)
 ]
 
 objectives = [
-    pygame.Rect(200, 425, 20, 20),
-    pygame.Rect(500, 325, 20, 20),
-    pygame.Rect(100, 225, 20, 20)
+    pygame.Rect(340, 425, 20, 20),
+    pygame.Rect(590, 325, 20, 20),
+    pygame.Rect(840, 225, 20, 20)
 ]
 
 objective_index = 0
@@ -55,6 +55,8 @@ def step(agent_input):
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+    
+    prev_dist = np.sqrt((agent.x - objectives[objective_index].x) ** 2 + (agent.y - objectives[objective_index].y) ** 2)
 
     if agent_input == 0:
         agent.x -= agent_speed
@@ -112,7 +114,6 @@ def step(agent_input):
 
     if touched_objective:
         reward = 10.0
-    reward -= 0.1
 
     off_left = agent.x < 0
     off_right = agent.x + agent.width > WIDTH
@@ -121,14 +122,19 @@ def step(agent_input):
 
     if off_left or off_right or off_top or off_bottom:
         done = True
-        reward = -500.0
+        reward = -1000.0
+
+    curr_dist = np.sqrt((agent.x - objectives[objective_index].x) ** 2 + (agent.y - objectives[objective_index].y) ** 2)
+
+    dist_reward = (prev_dist - curr_dist) * 0.1
+    reward += dist_reward
 
     return state, reward, done, {}
 
 def reset():
     global agent_vel_y, objective_index, on_ground, step_count
 
-    agent.x = 100
+    agent.x = 588
     agent.y = 300
     agent_vel_y = 0
     objective_index = 0
