@@ -3,6 +3,8 @@ from datetime import datetime
 from agent import DQNAgent
 import environment
 
+
+agent = DQNAgent(6, 3)
 NUM_EPISODES = 1000
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -11,7 +13,7 @@ for episode in range(NUM_EPISODES):
     episode_reward = 0.0
 
     for step in count():
-        action = DQNAgent.select_action(state)
+        action = agent.select_action(state)
         next_state, reward, done, info = environment.step(action)
 
         episode_reward += reward
@@ -19,14 +21,19 @@ for episode in range(NUM_EPISODES):
         if done:
             next_state = None
 
-        DQNAgent.store_experience(state, action, next_state, reward)
+        agent.store_experience(state, action, next_state, reward)
         
         state = next_state
 
-        DQNAgent.optimize_model()
+        agent.optimize_model()
 
         if done:
             print(f'Episode {episode + 1} finished. Total reward: {episode_reward}')
             break
 
-DQNAgent.save_model(f'models/dqn_agent_{timestamp}.pth')
+checkpoint_path = f'models/dqn_agent_{timestamp}.pth'
+
+agent.save(checkpoint_path)
+
+with open('./data/latest_checkpoint.txt', 'w') as f:
+    f.write(checkpoint_path)

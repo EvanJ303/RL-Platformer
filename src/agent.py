@@ -48,7 +48,7 @@ class DQNAgent:
         self.criterion = nn.SmoothL1Loss()
 
     def select_action(self, state):
-        self.epsilon = np.max(self.epsilon * self.epsilon_decay, self.epsilon_end)
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_end)
 
         if np.random.rand() < self.epsilon:
             action = np.random.randint(0, self.action_dim)
@@ -80,17 +80,17 @@ class DQNAgent:
         experiences = self.sample_memory(self.batch_size)
         batch = Experience(*zip(*experiences))
 
-        not_terminal_mask = torch.tensor((s is not None for s in batch.next_state), dtype=torch.bool, device=self.device)
-        not_terminal_next_states = torch.tensor((s for s in batch.next_state if s is not None), dtype=torch.float32, device=self.device)
+        not_terminal_mask = torch.tensor([s is not None for s in batch.next_state], dtype=torch.bool, device=self.device)
+        not_terminal_next_states = torch.tensor([s for s in batch.next_state if s is not None], dtype=torch.float32, device=self.device)
 
-        states = (torch.tensor(s, dtype=torch.float32, device=self.device).unsqueeze(0) for s in batch.state)
+        states = [torch.tensor([s], dtype=torch.float32, device=self.device) for s in batch.state]
         state_batch = torch.cat(states)
 
-        actions = (torch.tensor(a, dtype=torch.float32, device=self.device).unsqueeze(0) for a in batch.action)
-        action_batch = torch.cat(actions)
+        actions = [torch.tensor([a], dtype=torch.long, device=self.device) for a in batch.action]
+        action_batch = torch.stack(actions)
 
-        rewards = (torch.tensor(r, dtype=torch.float32, device=self.device).unsqueeze(0) for r in batch.reward)
-        reward_batch = torch.cat(rewards)
+        rewards = [torch.tensor([r], dtype=torch.float32, device=self.device) for r in batch.reward]
+        reward_batch = torch.stack(rewards)
 
         q_state_action = self.policy_net(state_batch).gather(1, action_batch)
 

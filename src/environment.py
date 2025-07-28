@@ -19,12 +19,12 @@ agent = pygame.Rect(100, 300, 25, 25)
 agent_speed = 5
 agent_vel_y = 0
 GRAVITY = 0.7
-JUMP_POWER = -10
+JUMP_POWER = -20
 on_ground = 0
 
 DEFAULT_STATE = (100, 300, 0, 200, 425, 0)
 
-MAX_STEPS = 1000
+MAX_STEPS = 1500
 step_count = 0
 
 ground = pygame.Rect(0, 550, WIDTH, 50)
@@ -67,14 +67,26 @@ def step(agent_input):
     agent_vel_y += GRAVITY
     agent.y += agent_vel_y
 
+    on_ground = 0
+
     if agent.colliderect(ground):
         agent.y = ground.y - agent.height
         agent_vel_y = 0
         on_ground = 1
-    else:
-        on_ground = 0
+    
+    for platform in platforms:
+        if agent.colliderect(platform):
+            if agent_vel_y > 0:
+                agent.y = platform.y - agent.height
+                agent_vel_y = 0
+                on_ground = 1
+            elif agent_vel_y < 0:
+                agent.y = platform.y + platform.height
+                agent_vel_y = 0
 
-    if agent.colliderect(objectives[objective_index]):
+    touched_objective = agent.colliderect(objectives[objective_index])
+
+    if touched_objective:
         new_index = objective_index
 
         while new_index == objective_index:
@@ -98,9 +110,18 @@ def step(agent_input):
     
     reward = 0.0
 
-    if agent.colliderect(objectives[objective_index]):
+    if touched_objective:
         reward = 10.0
     reward -= 0.1
+
+    off_left = agent.x < 0
+    off_right = agent.x + agent.width > WIDTH
+    off_top = agent.y < 0
+    off_bottom = agent.y + agent.height > HEIGHT
+
+    if off_left or off_right or off_top or off_bottom:
+        done = True
+        reward = -500.0
 
     return state, reward, done, {}
 
