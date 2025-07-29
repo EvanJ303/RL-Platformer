@@ -19,7 +19,7 @@ agent = pygame.Rect(588, 300, 25, 25)
 agent_speed = 5
 agent_vel_y = 0
 GRAVITY = 0.7
-JUMP_POWER = -15
+JUMP_POWER = -20
 on_ground = 0
 
 DEFAULT_STATE = (588, 300, 0, 200, 425, 0)
