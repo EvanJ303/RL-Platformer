@@ -8,7 +8,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Platformer')
 
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 240
 
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -113,7 +113,7 @@ def step(agent_input):
     reward = 0.0
 
     if touched_objective:
-        reward = 10.0
+        reward = 20.0
 
     off_left = agent.x < 0
     off_right = agent.x + agent.width > WIDTH
@@ -122,11 +122,11 @@ def step(agent_input):
 
     if off_left or off_right or off_top or off_bottom:
         done = True
-        reward = -1000.0
+        reward = -100.0
 
     curr_dist = np.sqrt((agent.x - objectives[objective_index].x) ** 2 + (agent.y - objectives[objective_index].y) ** 2)
 
-    dist_reward = (prev_dist - curr_dist) * 0.1
+    dist_reward = (prev_dist - curr_dist) * 0.15
     reward += dist_reward
 
     return state, reward, done, {}

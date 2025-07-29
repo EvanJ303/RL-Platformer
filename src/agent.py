@@ -29,10 +29,10 @@ class DQNAgent:
         self.batch_size = 64
         self.epsilon = 0.9
         self.epsilon_end = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.999
         self.gamma = 0.95
         self.tau = 0.005
-        self.lr = 5e-4
+        self.lr = 0.001
         self.memory = ReplayMemory(10000)
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
