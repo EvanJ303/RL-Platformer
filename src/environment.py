@@ -117,7 +117,7 @@ def step(agent_input):
     reward = 0.0
 
     if touched_objective:
-        reward = 10.0
+        reward = 20.0
 
     curr_dist = np.sqrt((agent.x - objectives[objective_index].x) ** 2 + (agent.y - objectives[objective_index].y) ** 2)
 
