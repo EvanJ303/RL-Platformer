@@ -18,11 +18,11 @@ BLUE = (0, 0, 255)
 agent = pygame.Rect(588, 300, 25, 25)
 agent_speed = 5
 agent_vel_y = 0
-GRAVITY = 0.7
+GRAVITY = 0.5
 JUMP_POWER = -20
 on_ground = 0
 
-DEFAULT_STATE = (588, 300, 0, 200, 425, 0)
+DEFAULT_STATE = (588, 300, 0, 570, 305, 0)
 
 MAX_STEPS = 1500
 step_count = 0
@@ -32,16 +32,16 @@ ground = pygame.Rect(0, 550, WIDTH, 50)
 platforms = [
     pygame.Rect(250, 450, 200, 20),
     pygame.Rect(500, 350, 200, 20),
-    pygame.Rect(750, 250, 200, 20)
+    pygame.Rect(750, 450, 200, 20)
 ]
 
 objectives = [
-    pygame.Rect(340, 425, 20, 20),
-    pygame.Rect(590, 325, 20, 20),
-    pygame.Rect(840, 225, 20, 20)
+    pygame.Rect(320, 405, 60, 60),
+    pygame.Rect(570, 305, 60, 60),
+    pygame.Rect(820, 405, 60, 60)
 ]
 
-objective_index = 0
+objective_index = 1
 
 def step(agent_input):
     global agent_vel_y, on_ground, objective_index, step_count
@@ -62,6 +62,10 @@ def step(agent_input):
         agent.x -= agent_speed
     if agent_input == 1:
         agent.x += agent_speed
+
+    agent.x = max(0, min(WIDTH - agent.width, agent.x))
+    agent.y = max(0, min(HEIGHT - agent.height, agent.y))
+
     if agent_input == 2 and on_ground:
         agent_vel_y = JUMP_POWER
         on_ground = 0
@@ -113,21 +117,14 @@ def step(agent_input):
     reward = 0.0
 
     if touched_objective:
-        reward = 20.0
-
-    off_left = agent.x < 0
-    off_right = agent.x + agent.width > WIDTH
-    off_top = agent.y < 0
-    off_bottom = agent.y + agent.height > HEIGHT
-
-    if off_left or off_right or off_top or off_bottom:
-        done = True
-        reward = -100.0
+        reward = 10.0
 
     curr_dist = np.sqrt((agent.x - objectives[objective_index].x) ** 2 + (agent.y - objectives[objective_index].y) ** 2)
 
-    dist_reward = (prev_dist - curr_dist) * 0.15
+    dist_reward = (prev_dist - curr_dist)
     reward += dist_reward
+
+    reward -= 0.01
 
     return state, reward, done, {}
 
@@ -137,7 +134,7 @@ def reset():
     agent.x = 588
     agent.y = 300
     agent_vel_y = 0
-    objective_index = 0
+    objective_index = 1
     on_ground = 0
 
     step_count = 0

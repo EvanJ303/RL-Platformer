@@ -31,7 +31,7 @@ for episode in range(NUM_EPISODES):
             print(f'Episode {episode + 1} finished. Total reward: {episode_reward}')
             break
 
-checkpoint_path = f'models/dqn_agent_{timestamp}.pth'
+checkpoint_path = f'./data/models/dqn_agent_{timestamp}.pth'
 
 agent.save(checkpoint_path)
 

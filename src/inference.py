@@ -7,6 +7,7 @@ with open('./data/latest_checkpoint.txt', 'r') as f:
 
 agent = DQNAgent(6, 3)
 agent.load(checkpoint_path)
+agent.disable_exploration()
 
 NUM_EPISODES = 3
 
