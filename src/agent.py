@@ -65,8 +65,10 @@ class DQNAgent:
         if np.random.rand() < self.epsilon:
             action = np.random.randint(0, self.action_dim)
         else:
-            if under_platform:
+            if under_platform == 'right':
                 action = 1
+            elif under_platform == 'left':
+                action = 0
             else:
                 state = torch.tensor(state, dtype=torch.float32, device=self.device)
                 state = state.unsqueeze(0)
