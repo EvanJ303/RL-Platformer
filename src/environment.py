@@ -126,11 +126,14 @@ def step(agent_input):
 
     reward -= 0.01
 
-    under_platform = False
+    under_platform = None
 
     for platform in platforms:
-        if agent.y + agent.height > platform.y and agent.x + agent.width > platform.x and agent.x < platform.x + platform.width + 15:
-            under_platform = True
+        if agent.y + agent.height > platform.y and agent.x + agent.width > platform.x - 15 and agent.x < platform.x + platform.width + 15:
+            if agent.x  + agent.width / 2 > platform.x + platform.width / 2:
+                under_platform = 'right'
+            else:
+                under_platform = 'left'
             break
 
     return state, reward, done, under_platform
