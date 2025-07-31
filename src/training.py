@@ -5,16 +5,16 @@ import environment
 
 
 agent = DQNAgent(6, 3)
-NUM_EPISODES = 1000
+NUM_EPISODES = 100
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 for episode in range(NUM_EPISODES):
-    state, info = environment.reset()
+    state, under_platform = environment.reset()
     episode_reward = 0.0
 
     for step in count():
-        action = agent.select_action(state)
-        next_state, reward, done, info = environment.step(action)
+        action = agent.select_action(state, under_platform)
+        next_state, reward, done, under_platform = environment.step(action)
 
         episode_reward += reward
 
@@ -28,7 +28,8 @@ for episode in range(NUM_EPISODES):
         agent.optimize_model()
 
         if done:
-            print(f'Episode {episode + 1} finished. Total reward: {episode_reward}')
+            print(f'Episode {episode + 1} finished. Total reward: {episode_reward}.')
+            agent.decay_epsilon()
             break
 
 checkpoint_path = f'./data/models/dqn_agent_{timestamp}.pth'

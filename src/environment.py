@@ -24,7 +24,7 @@ on_ground = 0
 
 DEFAULT_STATE = (588, 300, 0, 570, 305, 0)
 
-MAX_STEPS = 1500
+MAX_STEPS = 3000
 step_count = 0
 
 ground = pygame.Rect(0, 550, WIDTH, 50)
@@ -126,7 +126,14 @@ def step(agent_input):
 
     reward -= 0.01
 
-    return state, reward, done, {}
+    under_platform = False
+
+    for platform in platforms:
+        if agent.y + agent.height > platform.y and agent.x + agent.width > platform.x and agent.x < platform.x + platform.width + 15:
+            under_platform = True
+            break
+
+    return state, reward, done, under_platform
 
 def reset():
     global agent_vel_y, objective_index, on_ground, step_count
@@ -150,4 +157,4 @@ def reset():
 
     pygame.display.flip()
 
-    return DEFAULT_STATE, {}
+    return DEFAULT_STATE, False

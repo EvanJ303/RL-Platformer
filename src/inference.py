@@ -7,17 +7,17 @@ with open('./data/latest_checkpoint.txt', 'r') as f:
 
 agent = DQNAgent(6, 3)
 agent.load(checkpoint_path)
-agent.disable_exploration()
+agent.inference_mode()
 
-NUM_EPISODES = 3
+NUM_EPISODES = 10
 
 for episode in range(NUM_EPISODES):
-    state, info = environment.reset()
+    state, under_platform = environment.reset()
     episode_reward = 0.0
 
     for step in count():
-        action = agent.select_action(state)
-        next_state, reward, done, info = environment.step(action)
+        action = agent.select_action(state, under_platform)
+        next_state, reward, done, under_platform = environment.step(action)
 
         episode_reward += reward
         

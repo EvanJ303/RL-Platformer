@@ -27,13 +27,14 @@ class DQNAgent:
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.batch_size = 64
-        self.epsilon = 0.9
-        self.epsilon_end = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_start = 0.9
+        self.epsilon_end = 0.1
+        self.epsilon = self.epsilon_start
+        self.epsilon_decay = 0.999
         self.gamma = 0.99
         self.tau = 0.005
         self.lr = 0.00025
-        self.memory = ReplayMemory(10000)
+        self.memory = ReplayMemory(150000)
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -42,26 +43,31 @@ class DQNAgent:
 
         self.target_net = model.DQN(state_dim, action_dim)
         self.target_net.to(self.device)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
 
         self.optimizer = optim.RMSprop(self.policy_net.parameters(), lr=self.lr)
         self.criterion = nn.SmoothL1Loss()
 
-    def select_action(self, state):
-        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_end)
-
+    def select_action(self, state, under_platform):
         if np.random.rand() < self.epsilon:
             action = np.random.randint(0, self.action_dim)
         else:
-            state = torch.tensor(state, dtype=torch.float32, device=self.device)
-            state = state.unsqueeze(0)
+            if under_platform:
+                action = 1
+            else:
+                state = torch.tensor(state, dtype=torch.float32, device=self.device)
+                state = state.unsqueeze(0)
 
-            with torch.no_grad():
-                q_values = self.policy_net(state)
-            q_values = q_values.squeeze(0)
-            action = torch.argmax(q_values).item()
+                with torch.no_grad():
+                    q_values = self.policy_net(state)
+                q_values = q_values.squeeze(0)
+                action = q_values.argmax().item()
 
         return action
+    
+    def decay_epsilon(self):
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_end)
 
     def store_experience(self, *args):
         self.memory.push(*args)
@@ -72,6 +78,7 @@ class DQNAgent:
     def update_target(self):
         for policy_param, target_param in zip(self.policy_net.parameters(), self.target_net.parameters()):
             target_param.data.copy_(self.tau * policy_param.data + (1.0 - self.tau) * target_param.data)
+        self.target_net.eval()
 
     def optimize_model(self):
         if len(self.memory) < self.batch_size:
@@ -83,24 +90,22 @@ class DQNAgent:
         not_terminal_mask = torch.tensor([s is not None for s in batch.next_state], dtype=torch.bool, device=self.device)
         not_terminal_next_states = torch.tensor([s for s in batch.next_state if s is not None], dtype=torch.float32, device=self.device)
 
-        states = [torch.tensor([s], dtype=torch.float32, device=self.device) for s in batch.state]
-        state_batch = torch.cat(states)
-
-        actions = [torch.tensor([a], dtype=torch.long, device=self.device) for a in batch.action]
-        action_batch = torch.stack(actions)
-
-        rewards = [torch.tensor([r], dtype=torch.float32, device=self.device) for r in batch.reward]
-        reward_batch = torch.stack(rewards)
+        state_batch = torch.tensor(batch.state, dtype=torch.float32, device=self.device)
+        action_batch = torch.tensor(batch.action, dtype=torch.int64, device=self.device).unsqueeze(1)
+        reward_batch = torch.tensor(batch.reward, dtype=torch.float32, device=self.device)
 
         q_state_action = self.policy_net(state_batch).gather(1, action_batch)
 
         q_next_state = torch.zeros(self.batch_size, device=self.device)
-        with torch.no_grad():
-            q_next_state[not_terminal_mask] = self.target_net(not_terminal_next_states).max(1).values
+
+        if not_terminal_mask.any():
+            with torch.no_grad():
+                q_next_state[not_terminal_mask] = self.target_net(not_terminal_next_states).max(1).values
 
         expected_q_state_action = reward_batch + (self.gamma * q_next_state)
+        expected_q_state_action = expected_q_state_action.unsqueeze(1)
 
-        loss = self.criterion(q_state_action.squeeze(), expected_q_state_action)
+        loss = self.criterion(q_state_action, expected_q_state_action)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -108,13 +113,11 @@ class DQNAgent:
         self.optimizer.step()
         self.update_target()
 
-    def disable_exploration(self):
-        self.epsilon = 0.0
-        self.epsilon_end = 0.0
+    def inference_mode(self):
+        self.epsilon = self.epsilon_end
 
-    def enable_exploration(self):
-        self.epsilon = 0.9
-        self.epsilon_end = 0.01
+    def training_mode(self):
+        self.epsilon = self.epsilon_start
 
     def save(self, checkpoint_path):
         torch.save({
