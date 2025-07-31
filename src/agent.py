@@ -43,7 +43,7 @@ class DQNAgent:
         self.batch_size = 64
         # Initialize epsilon-greedy parameters
         self.epsilon_start = 0.9
-        self.epsilon_end = 0.05
+        self.epsilon_end = 0.1
         self.epsilon = self.epsilon_start
         self.epsilon_decay = 0.999
         # Initialize gamma, tau, and learning rate
