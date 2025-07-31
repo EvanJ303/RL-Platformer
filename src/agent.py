@@ -1,27 +1,39 @@
+# PyTorch deep learning library
 import torch
 import torch.nn as nn
 import torch.nn.utils as utils
 import torch.optim as optim
+# Numpy for numerical operations
 import numpy as np
+# Custom model module
 import model
+# Collections for the replay memory
 from collections import deque, namedtuple
+# Random for sampling transitions
 import random
 
+# Named tuple for storing experiences in the replay memory
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
 
+# Replay memory class
 class ReplayMemory:
+    # Initialize the replay memory with a maximum capacity
     def __init__(self, max_capacity):
         self.memory = deque([], maxlen=max_capacity)
 
+    # Push a transition into the memory
     def push(self, *args):
         self.memory.append(Experience(*args))
 
+    # Sample a batch of random transitions from the memory
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
+    # Check the length of the memory
     def __len__(self):
         return len(self.memory)
 
+# Deep Q-Network (DQN) agent class
 class DQNAgent:
     def __init__(self, state_dim, action_dim):
         self.state_dim = state_dim
