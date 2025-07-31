@@ -180,7 +180,7 @@ def step(agent_input):
     # Check if the agent is under any platform
     for platform in platforms:
         # Check if the agent is under the platform
-        if agent.y + agent.height > platform.y and agent.x + agent.width > platform.x - 15 and agent.x < platform.x + platform.width + 15:
+        if agent.y + agent.height > platform.y and agent.x + agent.width > platform.x - 30 and agent.x < platform.x + platform.width + 30:
             # Determine whether the agent is to the left or right of the center of the platform
             if agent.x  + agent.width / 2 > platform.x + platform.width / 2:
                 # Set the under-platform state to 'right'
